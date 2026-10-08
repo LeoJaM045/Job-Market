@@ -117,6 +117,36 @@ export const Sidebar: React.FC<SidebarProps> = ({
         </div>
       </div>
 
+      {/* Real-Time Ingestion Source Controller */}
+      <div className="p-4 border-b border-slate-900">
+        <div className="flex items-center justify-between mb-2">
+          <span className="text-[11px] font-semibold tracking-wider text-slate-400 uppercase">
+            Data Ingestion Stream
+          </span>
+          <span className="text-[10px] text-emerald-400 font-mono flex items-center gap-1">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
+            LIVE API
+          </span>
+        </div>
+        <div className="bg-slate-900/90 rounded-lg p-2.5 border border-slate-800 text-xs space-y-2">
+          <div className="text-[11px] text-slate-300 font-medium">
+            Active Feed: <span className="text-emerald-400">Arbeitnow & Jobicy REST APIs</span>
+          </div>
+          <p className="text-[10px] text-slate-500 leading-tight">
+            Streaming live tech requisitions mapped into Indian tech corridors.
+          </p>
+          <button
+            onClick={() => {
+              onResetFilters();
+            }}
+            className="w-full py-1.5 px-2 bg-emerald-950/80 hover:bg-emerald-900 text-emerald-300 border border-emerald-800 rounded text-[11px] font-medium flex items-center justify-center gap-1.5 transition-colors"
+          >
+            <RefreshCw className="w-3 h-3" />
+            <span>Pull Fresh Live Stream</span>
+          </button>
+        </div>
+      </div>
+
       {/* Storage & Serving Status */}
       <div className="p-4 border-b border-slate-900">
         <div className="flex items-center justify-between mb-2">

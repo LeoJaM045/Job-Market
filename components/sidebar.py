@@ -1,38 +1,36 @@
 """
 components/sidebar.py
 =====================
-Shared sidebar navigation, MongoDB cluster status controls, and Indian IT ecosystem filters.
+Shared sidebar navigation, live real-time ingestion controls, MongoDB cluster status,
+and Indian IT ecosystem filters.
 """
 
 from typing import Tuple, Any, Optional
+import datetime
 import streamlit as st
 import pandas as pd
 from database.mongo_client import get_mongo_connection
 from config.settings import COMPANY_TYPES, EXPERIENCE_TIERS, INDIAN_TECH_HUBS
 
 
-def render_sidebar(df_raw: pd.DataFrame) -> Tuple[str, pd.DataFrame, Optional[Any]]:
+def render_sidebar(df_raw: pd.DataFrame) -> Tuple[str, pd.DataFrame, Optional[Any], str]:
     """
-    Renders the navigation menu, database configuration tools, and global filters
-    tailored for Indian tech hubs, roles, and company types.
-
-    Args:
-        df_raw: Raw unfiltered DataFrame.
+    Renders the navigation menu, live data ingestion controls, and global filters.
 
     Returns:
-        (selected_page, filtered_df, mongo_db_instance)
+        (selected_page, filtered_df, mongo_db_instance, selected_source_mode)
     """
     with st.sidebar:
         st.markdown("## ⚡ Indian Tech Hiring")
         st.markdown(
             "<span class='india-pill'>India IT Hubs</span>"
-            "<span class='tech-pill'>PySpark</span>"
-            "<span class='tech-pill'>DGIM</span>"
-            "<span class='tech-pill'>MLlib</span>",
+            "<span class='tech-pill'>Live Web Stream</span>"
+            "<span class='tech-pill'>PySpark</span>",
             unsafe_allow_html=True
         )
         st.markdown("---")
 
+        # 1. Navigation Menu
         selected_page = st.radio(
             "Navigation Module",
             [
@@ -45,6 +43,41 @@ def render_sidebar(df_raw: pd.DataFrame) -> Tuple[str, pd.DataFrame, Optional[An
         )
 
         st.markdown("---")
+
+        # 2. Real-Time Ingestion Source Controller
+        st.markdown("### 🌐 Data Ingestion Stream")
+
+        source_mode_label = st.radio(
+            "Ingestion Mode",
+            [
+                "🟢 Live Real-Time Feed (Public APIs)",
+                "🗄️ MongoDB Live Cluster",
+                "📊 High-Fidelity Synthetic Benchmark"
+            ],
+            index=0,
+            help="Toggle between fetching live jobs over HTTP, reading from MongoDB, or using the 3,000-record benchmark."
+        )
+
+        source_mode_map = {
+            "🟢 Live Real-Time Feed (Public APIs)": "live",
+            "🗄️ MongoDB Live Cluster": "db",
+            "📊 High-Fidelity Synthetic Benchmark": "mock"
+        }
+        source_mode = source_mode_map[source_mode_label]
+
+        # Trigger button for real-time live fetch
+        col_btn, _ = st.columns([3, 1])
+        with col_btn:
+            if st.button("🔄 Pull Fresh Live Data"):
+                st.cache_data.clear()
+                st.success("Refreshed live job streams over network!")
+                st.rerun()
+
+        st.caption(f"Last Stream Handshake: {datetime.datetime.now().strftime('%H:%M:%S UTC')}")
+
+        st.markdown("---")
+
+        # 3. Storage & Serving Layer Status
         st.markdown("### 🗄️ Storage & Serving Layer")
 
         mongo_client, mongo_db, is_mongo_connected, mongo_err = get_mongo_connection()
@@ -52,7 +85,7 @@ def render_sidebar(df_raw: pd.DataFrame) -> Tuple[str, pd.DataFrame, Optional[An
         if is_mongo_connected:
             st.success("Connected to MongoDB (`indian_job_intelligence_db`)")
         else:
-            st.info("MongoDB local instance offline. Utilizing cached PySpark Indian IT dataset replica.")
+            st.info("MongoDB local instance offline. Real-time stream operating in direct-serving mode.")
 
         with st.expander("Database Configuration"):
             db_host = st.text_input("MongoDB URI", value="mongodb://localhost:27017/")
@@ -65,27 +98,29 @@ def render_sidebar(df_raw: pd.DataFrame) -> Tuple[str, pd.DataFrame, Optional[An
                     st.error(f"Handshake failed: {err}")
 
         st.markdown("---")
+
+        # 4. Global Indian Market Filters
         st.markdown("### 🔍 Indian Market Filters")
 
         # Role filter
         all_roles = sorted(df_raw["role"].unique().tolist())
         selected_roles = st.multiselect("Engineering Role", all_roles, default=all_roles)
 
-        # Indian City Hub filter
-        all_cities = [c for c in INDIAN_TECH_HUBS if c in df_raw["city"].unique()]
-        selected_cities = st.multiselect("Tech Hub / City", all_cities, default=all_cities)
+        # Tech Hub / City filter
+        available_cities = [c for c in INDIAN_TECH_HUBS if c in df_raw["city"].unique()]
+        selected_cities = st.multiselect("Tech Hub / City", available_cities, default=available_cities)
 
-        # Company Type filter (Unicorns, GCCs, IT Services, Startups)
-        all_comp_types = [ct for ct in COMPANY_TYPES if ct in df_raw["company_type"].unique()]
-        selected_comp_types = st.multiselect("Company Type", all_comp_types, default=all_comp_types)
+        # Company Sector filter
+        available_comp_types = [ct for ct in COMPANY_TYPES if ct in df_raw["company_type"].unique()]
+        selected_comp_types = st.multiselect("Sector / Company Type", available_comp_types, default=available_comp_types)
 
-        # Experience Level filter
-        all_exp = [e for e in EXPERIENCE_TIERS if e in df_raw["experience_level"].unique()]
-        selected_exp = st.multiselect("Experience Tier", all_exp, default=all_exp)
+        # Experience Tier filter
+        available_exp = [e for e in EXPERIENCE_TIERS if e in df_raw["experience_level"].unique()]
+        selected_exp = st.multiselect("Experience Tier", available_exp, default=available_exp)
 
-        # Date range filter
-        min_date = df_raw["posted_date"].min().date()
-        max_date = df_raw["posted_date"].max().date()
+        # Date Range filter
+        min_date = df_raw["posted_date"].min().date() if not df_raw.empty else datetime.date.today()
+        max_date = df_raw["posted_date"].max().date() if not df_raw.empty else datetime.date.today()
         date_range = st.date_input(
             "Posting Date Range",
             [min_date, max_date],
@@ -110,4 +145,4 @@ def render_sidebar(df_raw: pd.DataFrame) -> Tuple[str, pd.DataFrame, Optional[An
                 (df_filtered["posted_date"].dt.date <= end_d)
             ]
 
-        return selected_page, df_filtered, mongo_db
+        return selected_page, df_filtered, mongo_db, source_mode

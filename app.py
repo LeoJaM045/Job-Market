@@ -1,11 +1,12 @@
 """
 Indian Job Market Trends & Hiring Intelligence System
 =====================================================
-Main Application Entry Point (Modular Architecture).
+Main Application Entry Point (Modular Architecture with Live Real-Time Ingestion).
 
 Architecture Pipeline:
-  HDFS (Raw Storage) -> PySpark (Cleaning & Aggregation across Indian Tech Hubs)
-  -> Kafka/Batch Stream (Bloom Filter Placement Scam Detection + DGIM Skill Spike Detection)
+  Real-Time Web Feeds (Arbeitnow & Jobicy APIs) / HDFS (Raw Storage)
+  -> PySpark (Cleaning & Skill Tokenization across Indian Tech Hubs)
+  -> Kafka/Batch Stream (Bloom Filter Placement Scam Defense + DGIM Surge Spike Detection)
   -> Spark MLlib (Indian CTC Bracket Classification in ₹ LPA)
   -> MongoDB (Serving Layer: 'indian_job_intelligence_db')
   -> Streamlit (Presentation & Analytics Console)
@@ -31,7 +32,7 @@ from views.salary_ml import render_salary_ml_page
 
 
 def main() -> None:
-    """Main execution lifecycle and routing handler for the Indian Tech Ecosystem."""
+    """Main execution lifecycle and routing handler with real-time API support."""
     # 1. Page Configuration
     st.set_page_config(
         page_title=APP_PAGE_TITLE,
@@ -43,12 +44,21 @@ def main() -> None:
     # 2. Inject Enterprise Dark Styling
     st.markdown(CUSTOM_DARK_THEME_CSS, unsafe_allow_html=True)
 
-    # 3. Initialize / Retrieve Data from Serving Layer (MongoDB / Synthetic Fallback)
+    # 3. Initialize / Retrieve Data from Serving Layer (Live API / MongoDB / Fallback)
     _, mongo_db, _, _ = get_mongo_connection()
-    df_raw = fetch_job_postings(mongo_db, limit=3000)
+
+    if "current_source_mode" not in st.session_state:
+        st.session_state["current_source_mode"] = "live"
+
+    df_raw = fetch_job_postings(mongo_db, limit=3000, source_mode=st.session_state["current_source_mode"])
 
     # 4. Render Sidebar Navigation & Global Filters (Indian Hubs, Roles, CTC)
-    selected_page, df_filtered, _ = render_sidebar(df_raw)
+    selected_page, df_filtered, _, new_source_mode = render_sidebar(df_raw)
+
+    # Handle source mode changes
+    if new_source_mode != st.session_state["current_source_mode"]:
+        st.session_state["current_source_mode"] = new_source_mode
+        st.rerun()
 
     # 5. Route to Target Dashboard View
     if selected_page == "1. Overview & Executive Summary":
@@ -70,10 +80,10 @@ def main() -> None:
         st.caption(
             "⚡ **Indian Job Market Trends & Hiring Intelligence System** | "
             "Distributed Big Data Stack: Apache Spark, HDFS, Kafka, MongoDB, Streamlit. "
-            "Tech Hubs: Bengaluru · Mumbai · Hyderabad · Pune · Delhi NCR · Chennai."
+            f"Active Ingestion Feed: {df_filtered['source_type'].iloc[0] if not df_filtered.empty and 'source_type' in df_filtered.columns else 'Live Stream'}"
         )
     with f_c2:
-        st.caption(f"Engine Timestamp: {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S UTC')}")
+        st.caption(f"Stream Sync: {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S UTC')}")
 
 
 if __name__ == "__main__":
