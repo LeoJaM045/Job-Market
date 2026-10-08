@@ -2,7 +2,7 @@
 components/sidebar.py
 =====================
 Shared sidebar navigation, live real-time ingestion controls, MongoDB cluster status,
-and Indian IT ecosystem filters.
+and Indian IT ecosystem filters with defensive tz-naive datetime sanitization.
 """
 
 from typing import Tuple, Any, Optional
@@ -20,6 +20,13 @@ def render_sidebar(df_raw: pd.DataFrame) -> Tuple[str, pd.DataFrame, Optional[An
     Returns:
         (selected_page, filtered_df, mongo_db_instance, selected_source_mode)
     """
+    # Defensive normalization: ensure posted_date is always a clean tz-naive datetime
+    if not df_raw.empty and "posted_date" in df_raw.columns:
+        try:
+            df_raw["posted_date"] = pd.to_datetime(df_raw["posted_date"], utc=True).dt.tz_localize(None)
+        except Exception:
+            pass
+
     with st.sidebar:
         st.markdown("## ⚡ Indian Tech Hiring")
         st.markdown(
@@ -65,7 +72,6 @@ def render_sidebar(df_raw: pd.DataFrame) -> Tuple[str, pd.DataFrame, Optional[An
         }
         source_mode = source_mode_map[source_mode_label]
 
-        # Trigger button for real-time live fetch
         col_btn, _ = st.columns([3, 1])
         with col_btn:
             if st.button("🔄 Pull Fresh Live Data"):
@@ -103,24 +109,39 @@ def render_sidebar(df_raw: pd.DataFrame) -> Tuple[str, pd.DataFrame, Optional[An
         st.markdown("### 🔍 Indian Market Filters")
 
         # Role filter
-        all_roles = sorted(df_raw["role"].unique().tolist())
+        all_roles = sorted(df_raw["role"].unique().tolist()) if not df_raw.empty and "role" in df_raw.columns else []
         selected_roles = st.multiselect("Engineering Role", all_roles, default=all_roles)
 
         # Tech Hub / City filter
-        available_cities = [c for c in INDIAN_TECH_HUBS if c in df_raw["city"].unique()]
+        available_cities = [c for c in INDIAN_TECH_HUBS if c in df_raw["city"].unique()] if not df_raw.empty and "city" in df_raw.columns else []
         selected_cities = st.multiselect("Tech Hub / City", available_cities, default=available_cities)
 
         # Company Sector filter
-        available_comp_types = [ct for ct in COMPANY_TYPES if ct in df_raw["company_type"].unique()]
+        available_comp_types = [ct for ct in COMPANY_TYPES if ct in df_raw["company_type"].unique()] if not df_raw.empty and "company_type" in df_raw.columns else []
         selected_comp_types = st.multiselect("Sector / Company Type", available_comp_types, default=available_comp_types)
 
         # Experience Tier filter
-        available_exp = [e for e in EXPERIENCE_TIERS if e in df_raw["experience_level"].unique()]
+        available_exp = [e for e in EXPERIENCE_TIERS if e in df_raw["experience_level"].unique()] if not df_raw.empty and "experience_level" in df_raw.columns else []
         selected_exp = st.multiselect("Experience Tier", available_exp, default=available_exp)
 
-        # Date Range filter
-        min_date = df_raw["posted_date"].min().date() if not df_raw.empty else datetime.date.today()
-        max_date = df_raw["posted_date"].max().date() if not df_raw.empty else datetime.date.today()
+        # Safe Date Range filter (Guaranteed tz-naive)
+        if not df_raw.empty and "posted_date" in df_raw.columns:
+            try:
+                min_ts = df_raw["posted_date"].min()
+                max_ts = df_raw["posted_date"].max()
+                min_date = min_ts.date() if hasattr(min_ts, "date") else datetime.date.today() - datetime.timedelta(days=30)
+                max_date = max_ts.date() if hasattr(max_ts, "date") else datetime.date.today()
+            except Exception:
+                min_date = datetime.date.today() - datetime.timedelta(days=30)
+                max_date = datetime.date.today()
+        else:
+            min_date = datetime.date.today() - datetime.timedelta(days=30)
+            max_date = datetime.date.today()
+
+        # Handle edge case where min_date > max_date
+        if min_date > max_date:
+            min_date, max_date = max_date, min_date
+
         date_range = st.date_input(
             "Posting Date Range",
             [min_date, max_date],
@@ -138,11 +159,17 @@ def render_sidebar(df_raw: pd.DataFrame) -> Tuple[str, pd.DataFrame, Optional[An
             df_filtered = df_filtered[df_filtered["company_type"].isin(selected_comp_types)]
         if selected_exp:
             df_filtered = df_filtered[df_filtered["experience_level"].isin(selected_exp)]
-        if isinstance(date_range, (list, tuple)) and len(date_range) == 2:
+
+        if isinstance(date_range, (list, tuple)) and len(date_range) == 2 and not df_filtered.empty and "posted_date" in df_filtered.columns:
             start_d, end_d = date_range
-            df_filtered = df_filtered[
-                (df_filtered["posted_date"].dt.date >= start_d) &
-                (df_filtered["posted_date"].dt.date <= end_d)
-            ]
+            try:
+                # Compare safely by converting timestamps to pure Python date objects
+                dates_only = df_filtered["posted_date"].dt.date
+                df_filtered = df_filtered[
+                    (dates_only >= start_d) &
+                    (dates_only <= end_d)
+                ]
+            except Exception:
+                pass
 
         return selected_page, df_filtered, mongo_db, source_mode

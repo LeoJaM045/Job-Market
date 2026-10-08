@@ -4,7 +4,7 @@ database/live_fetcher.py
 Real-Time Job Requisition Ingestion Engine.
 Fetches live, real-world tech job postings from public APIs (Arbeitnow & Jobicy REST APIs),
 tokenizes technical skill vectors, maps them to Indian Tech Hubs (Bengaluru, Hyderabad, Pune, etc.),
-computes compensation benchmarks in ₹ LPA, runs spam checks, and optionally syncs to MongoDB.
+computes compensation benchmarks in ₹ LPA, runs spam checks, and ensures tz-naive timestamps.
 """
 
 import urllib.request
@@ -51,6 +51,25 @@ SPAM_KEYWORDS = [
     r"\b100% placement\b",
     r"\bconsultancy charge\b"
 ]
+
+
+def _normalize_date_naive(date_val: Any, fallback_days_ago: int = 0) -> pd.Timestamp:
+    """
+    Safely converts any date value (tz-aware, ISO string, unix epoch)
+    into a timezone-naive (tz-naive) pandas Timestamp to prevent comparison errors.
+    """
+    if date_val is None:
+        return pd.Timestamp.now().normalize() - pd.Timedelta(days=fallback_days_ago)
+
+    try:
+        if isinstance(date_val, (int, float)):
+            ts = pd.to_datetime(date_val, unit="s", utc=True)
+        else:
+            ts = pd.to_datetime(date_val, utc=True)
+        # Strip timezone to ensure it is purely tz-naive
+        return ts.tz_localize(None)
+    except Exception:
+        return pd.Timestamp.now().normalize() - pd.Timedelta(days=fallback_days_ago)
 
 
 def _extract_skills_from_text(text: str) -> List[str]:
@@ -121,7 +140,7 @@ def _fetch_from_jobicy() -> List[Dict[str, Any]]:
 def fetch_realtime_job_market_data(limit: int = 1500) -> pd.DataFrame:
     """
     Fetches, transforms, and normalizes real-time job requisitions from live public APIs.
-    Cached for 10 minutes (ttl=600s).
+    Cached for 10 minutes (ttl=600s). Guaranteed to produce tz-naive timestamps.
 
     Returns:
         pd.DataFrame containing live job postings structured for the Indian tech pipeline.
@@ -143,17 +162,14 @@ def fetch_realtime_job_market_data(limit: int = 1500) -> pd.DataFrame:
         role = _classify_role_from_title(title)
         skills = _extract_skills_from_text(combined_text)
 
-        city = INDIAN_TECH_HUBS[i % len(INDIAN_TECH_HUBS)]
+        city = INDIAN_TECH_HUB = INDIAN_TECH_HUBS[i % len(INDIAN_TECH_HUBS)]
         comp_type = COMPANY_TYPES[i % len(COMPANY_TYPES)]
 
         exp_tier = EXPERIENCE_TIERS[(i + 1) % len(EXPERIENCE_TIERS)]
         years = 2 if "Fresher" in exp_tier else (4 if "Mid" in exp_tier else (7 if "Senior" in exp_tier else 10))
 
-        created_at = job.get("created_at")
-        try:
-            posted_date = pd.to_datetime(created_at, unit="s") if isinstance(created_at, (int, float)) else pd.to_datetime(created_at)
-        except Exception:
-            posted_date = pd.to_datetime(datetime.datetime.now() - datetime.timedelta(days=(i % 30)))
+        # Ensure tz-naive timestamp
+        posted_date = _normalize_date_naive(job.get("created_at"), fallback_days_ago=(i % 30))
 
         base_tier_lpa = {
             "Fresher (0-2 yrs)": 6.5,
@@ -213,11 +229,8 @@ def fetch_realtime_job_market_data(limit: int = 1500) -> pd.DataFrame:
         exp_tier = EXPERIENCE_TIERS[j % len(EXPERIENCE_TIERS)]
         years = 1 if "Fresher" in exp_tier else (3 if "Mid" in exp_tier else (6 if "Senior" in exp_tier else 11))
 
-        pub_date = job.get("pubDate")
-        try:
-            posted_date = pd.to_datetime(pub_date)
-        except Exception:
-            posted_date = pd.to_datetime(datetime.datetime.now() - datetime.timedelta(days=(j % 25)))
+        # Ensure tz-naive timestamp
+        posted_date = _normalize_date_naive(job.get("pubDate"), fallback_days_ago=(j % 25))
 
         base_lpa = {
             "Fresher (0-2 yrs)": 7.0,
@@ -253,6 +266,8 @@ def fetch_realtime_job_market_data(limit: int = 1500) -> pd.DataFrame:
 
     if records:
         df_live = pd.DataFrame(records)
+        # Double-check and force entire posted_date series to tz-naive
+        df_live["posted_date"] = pd.to_datetime(df_live["posted_date"], utc=True).dt.tz_localize(None)
         return df_live.head(limit)
 
     from database.mock_data import generate_synthetic_job_market_data

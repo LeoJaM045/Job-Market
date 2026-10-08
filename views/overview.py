@@ -62,18 +62,23 @@ def render_overview_page(df: pd.DataFrame) -> None:
 
     with chart_c1:
         st.subheader("Daily Postings Ingestion Velocity (Indian Tech Hubs)")
-        if not df.empty:
-            daily_counts = df.groupby(df["posted_date"].dt.date).size().reset_index(name="count")
-            fig_time = px.area(
-                daily_counts,
-                x="posted_date",
-                y="count",
-                labels={"posted_date": "Date", "count": "Requisitions Ingested"},
-                color_discrete_sequence=["#38BDF8"]
-            )
-            fig_time.update_layout(**PLOTLY_THEME_LAYOUT)
-            fig_time.update_traces(fillcolor="rgba(56, 189, 248, 0.2)")
-            st.plotly_chart(fig_time, use_container_width=True)
+        if not df.empty and "posted_date" in df.columns:
+            try:
+                date_series = pd.to_datetime(df["posted_date"], utc=True).dt.tz_localize(None).dt.date
+                daily_counts = df.groupby(date_series).size().reset_index(name="count")
+                daily_counts.columns = ["posted_date", "count"]
+                fig_time = px.area(
+                    daily_counts,
+                    x="posted_date",
+                    y="count",
+                    labels={"posted_date": "Date", "count": "Requisitions Ingested"},
+                    color_discrete_sequence=["#38BDF8"]
+                )
+                fig_time.update_layout(**PLOTLY_THEME_LAYOUT)
+                fig_time.update_traces(fillcolor="rgba(56, 189, 248, 0.2)")
+                st.plotly_chart(fig_time, use_container_width=True)
+            except Exception:
+                st.info("Ingestion velocity timeline aggregating...")
         else:
             st.info("No postings matching the selected filter criteria.")
 

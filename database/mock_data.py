@@ -183,4 +183,6 @@ def generate_synthetic_job_market_data(num_records: int = 3000) -> pd.DataFrame:
             "recruiter_id": recruiter_id
         })
 
-    return pd.DataFrame(records)
+    df = pd.DataFrame(records)
+    df["posted_date"] = pd.to_datetime(df["posted_date"], utc=True).dt.tz_localize(None)
+    return df
