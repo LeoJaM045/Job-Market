@@ -1,0 +1,6 @@
+{
+  "name": "Indian Job Market Trends & Hiring Intelligence System",
+  "description": "Big Data Analytics & Hiring Intelligence System for the Indian Tech Ecosystem featuring PySpark, DGIM real-time skill spike detection, Bloom filter consultancy spam filtration, and ML salary prediction in INR LPA.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
