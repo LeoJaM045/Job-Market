@@ -35,7 +35,43 @@ def render_sidebar(df_raw: pd.DataFrame) -> Tuple[str, pd.DataFrame, Optional[An
             "<span class='tech-pill'>PySpark</span>",
             unsafe_allow_html=True
         )
-        st.markdown("---")
+        # Big Data Pipeline Status Badges
+        try:
+            from database.bigdata_client import probe_bigdata_services
+            bd_status = probe_bigdata_services()
+            hdfs_b = bd_status.get("hdfs", {}).get("badge", "Offline (Simulated)")
+            kafka_b = bd_status.get("kafka", {}).get("badge", "Idle (Simulated)")
+            spark_b = bd_status.get("spark", {}).get("badge", "Pandas Fallback")
+            mllib_b = bd_status.get("mllib", {}).get("badge", "Scikit-Learn Fallback")
+            
+            hdfs_color = "#34D399" if "Connected" in hdfs_b else "#F59E0B"
+            kafka_color = "#34D399" if "Streaming" in kafka_b else "#94A3B8"
+            spark_color = "#34D399" if "Ready" in spark_b else "#818CF8"
+            mllib_color = "#34D399" if "Spark" in mllib_b else "#38BDF8"
+
+            st.markdown(f"""
+            <div style="background: #111827; border: 1px solid #374151; border-radius: 6px; padding: 10px; margin-bottom: 12px; font-size: 0.72rem;">
+                <div style="font-weight: 600; color: #E5E7EB; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.04em;">Big Data Cluster Status</div>
+                <div style="display: flex; justify-content: space-between; margin-bottom: 3px;">
+                    <span style="color: #9CA3AF;">HDFS (9870):</span>
+                    <span style="color: {hdfs_color}; font-weight: 600;">● {hdfs_b}</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; margin-bottom: 3px;">
+                    <span style="color: #9CA3AF;">Kafka (9092):</span>
+                    <span style="color: {kafka_color}; font-weight: 600;">● {kafka_b}</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; margin-bottom: 3px;">
+                    <span style="color: #9CA3AF;">Spark Batch:</span>
+                    <span style="color: {spark_color}; font-weight: 600;">● {spark_b}</span>
+                </div>
+                <div style="display: flex; justify-content: space-between;">
+                    <span style="color: #9CA3AF;">Spark MLlib:</span>
+                    <span style="color: {mllib_color}; font-weight: 600;">● {mllib_b}</span>
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
+        except Exception:
+            pass
 
         # 1. Navigation Menu
         selected_page = st.radio(
@@ -45,7 +81,8 @@ def render_sidebar(df_raw: pd.DataFrame) -> Tuple[str, pd.DataFrame, Optional[An
                 "2. In-Demand Skills & Co-occurrence",
                 "3. Real-Time Streaming & Spike Analytics",
                 "4. Salary Insights & ML Bracket Prediction",
-                "5. Intelligence Reports & Export Center"
+                "5. Intelligence Reports & Export Center",
+                "6. Distributed Big Data Infrastructure (Hadoop/Spark/Kafka)"
             ],
             index=0
         )

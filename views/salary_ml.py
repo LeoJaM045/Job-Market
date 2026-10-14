@@ -117,69 +117,44 @@ def render_salary_ml_page(df: pd.DataFrame) -> None:
         with ml_c2:
             st.subheader("Model Inference & Feature Importance")
 
-            # Scoring algorithm simulating Spark MLlib Random Forest model for Indian Market
-            exp_scores = {
-                "Fresher (0-2 yrs)": 25,
-                "Mid-Level (2-5 yrs)": 55,
-                "Senior (5-8 yrs)": 84,
-                "Lead / Principal (8+ yrs)": 98
-            }
-            city_scores = {
-                "Bengaluru": 18,
-                "Mumbai": 16,
-                "Hyderabad": 12,
-                "Delhi NCR (Gurgaon/Noida)": 14,
-                "Pune": 9,
-                "Chennai": 6
-            }
-            comp_type_scores = {
-                "Product Unicorns (Flipkart, Swiggy, Razorpay)": 30,
-                "Global Capability Centres (GCCs)": 26,
-                "IT Services (TCS, Infosys, Wipro)": -12,
-                "Seed / Series-A Startups": 15
-            }
-            skill_weights = {
-                "PySpark": 15, "Databricks": 14, "GenAI / LLMs": 18, "AWS": 10,
-                "Kubernetes": 11, "Apache Kafka": 9, "Snowflake": 10, "Python": 8,
-                "React.js": 7, "Node.js": 7, "Java / Spring Boot": 9, "SQL": 5, "dbt": 7
-            }
+            # Real Spark MLlib / Local Scikit-Learn Inference Engine
+            from database.bigdata_client import predict_salary_unified
 
-            raw_score = (
-                exp_scores[pred_exp_lvl] +
-                city_scores[pred_city] +
-                comp_type_scores[pred_comp_type] +
-                (pred_years * 3.0)
+            inf_res = predict_salary_unified(
+                role=pred_role,
+                experience_level=pred_exp_lvl,
+                years_experience=float(pred_years),
+                city=pred_city,
+                company_type=pred_comp_type,
+                skills=pred_skills
             )
-            skill_contrib = sum(skill_weights.get(s, 4) for s in pred_skills)
-            total_model_score = max(5, raw_score + skill_contrib)
 
-            # Softmax calculation for Indian brackets (< ₹6 LPA, ₹6 - ₹18 LPA, > ₹18 LPA)
-            # Calibration points: Low center ~ 35, Med center ~ 75, High center ~ 115
-            low_logit = max(0.1, 95 - total_model_score)
-            med_logit = max(0.1, 70 - abs(total_model_score - 78))
-            high_logit = max(0.1, total_model_score - 72)
+            winning_bracket = inf_res["predicted_bracket"]
+            winning_confidence = inf_res["confidence"]
+            est_min = inf_res["estimated_ctc_min_lpa"]
+            est_max = inf_res["estimated_ctc_max_lpa"]
+            provenance_badge = inf_res["provenance_badge"]
+            is_spark_mllib = inf_res.get("is_spark_mllib", False)
 
-            exp_logits = np.exp(np.array([low_logit, med_logit, high_logit]) / 18.0)
-            probs = exp_logits / np.sum(exp_logits)
-
-            winning_idx = int(np.argmax(probs))
-            winning_bracket = SALARY_BRACKETS[winning_idx]
-            winning_confidence = probs[winning_idx]
-
-            # Estimated CTC in LPA
-            est_lpa_center = round(max(3.5, (total_model_score / 130.0) * 36.0), 1)
-            est_min = max(3.0, round(est_lpa_center * 0.88, 1))
-            est_max = round(est_lpa_center * 1.15, 1)
-
+            winning_idx = SALARY_BRACKETS.index(winning_bracket) if winning_bracket in SALARY_BRACKETS else 1
             badge_color = "#10B981" if winning_idx == 2 else ("#38BDF8" if winning_idx == 1 else "#64748B")
+            prov_bg = "#065F46" if is_spark_mllib else "#1E293B"
+            prov_fg = "#34D399" if is_spark_mllib else "#94A3B8"
+            prov_border = "#059669" if is_spark_mllib else "#475569"
+
             st.markdown(f"""
             <div style="background-color: #111827; border: 2px solid {badge_color}; border-radius: 8px; padding: 18px; margin-bottom: 16px;">
-                <div style="font-size: 0.8rem; text-transform: uppercase; color: #9CA3AF; letter-spacing: 0.05em;">Predicted Indian CTC Bracket</div>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                    <span style="font-size: 0.8rem; text-transform: uppercase; color: #9CA3AF; letter-spacing: 0.05em;">Predicted Indian CTC Bracket</span>
+                    <span style="background: {prov_bg}; color: {prov_fg}; border: 1px solid {prov_border}; font-size: 0.72rem; padding: 2px 8px; border-radius: 4px; font-weight: 600;">
+                        ● {provenance_badge}
+                    </span>
+                </div>
                 <div style="font-size: 1.7rem; font-weight: 700; color: {badge_color};">{winning_bracket}</div>
                 <div style="font-size: 0.95rem; color: #F3F4F6; margin-top: 6px;">
                     Estimated CTC Range: <strong>{CURRENCY_SYMBOL}{est_min} - {CURRENCY_SYMBOL}{est_max} {CURRENCY_UNIT}</strong>
                 </div>
-                <div style="font-size: 0.85rem; color: #9CA3AF; margin-top: 4px;">Classification Confidence: <strong>{winning_confidence * 100:.1f}%</strong></div>
+                <div style="font-size: 0.85rem; color: #9CA3AF; margin-top: 4px;">Classification Confidence: <strong>{winning_confidence * 100:.1f}%</strong> (Inference: {inf_res.get('latency_ms', 1.2)}ms)</div>
             </div>
             """, unsafe_allow_html=True)
 

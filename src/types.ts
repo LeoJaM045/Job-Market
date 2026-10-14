@@ -74,4 +74,24 @@ export interface MLPredictionOutput {
   };
   featureWeights: { feature: string; weight: number }[];
   estimatedLpaRange: [number, number];
+  provenanceBadge?: string;
+  isSparkMllib?: boolean;
+  latencyMs?: number;
+}
+
+export interface BigDataServiceItem {
+  name: string;
+  endpoint?: string;
+  broker?: string;
+  master?: string;
+  status: string;
+  badge: string;
+  isSimulated: boolean;
+}
+
+export interface BigDataClusterStatus {
+  hdfs: BigDataServiceItem;
+  kafka: BigDataServiceItem;
+  spark: BigDataServiceItem;
+  mllib: BigDataServiceItem;
 }

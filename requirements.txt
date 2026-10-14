@@ -1,5 +1,16 @@
-streamlit>=1.30.0
-pymongo>=4.6.0
-plotly>=5.18.0
-pandas>=2.1.0
-numpy>=1.26.0
+# Big Data Analytics & Indian Hiring Intelligence System Dependencies
+# Target Python Version: 3.10+
+streamlit==1.32.0
+pymongo==4.6.2
+plotly==5.20.0
+pandas==2.2.1
+numpy==1.26.4
+pyspark==3.5.1
+fastapi==0.110.0
+uvicorn==0.28.0
+hdfs==2.7.3
+kafka-python==2.0.2
+requests==2.31.0
+scikit-learn==1.4.1.post1
+pyarrow==15.0.0
+pydantic==2.6.4
