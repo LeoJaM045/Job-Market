@@ -44,7 +44,8 @@ def render_sidebar(df_raw: pd.DataFrame) -> Tuple[str, pd.DataFrame, Optional[An
                 "1. Overview & Executive Summary",
                 "2. In-Demand Skills & Co-occurrence",
                 "3. Real-Time Streaming & Spike Analytics",
-                "4. Salary Insights & ML Bracket Prediction"
+                "4. Salary Insights & ML Bracket Prediction",
+                "5. Intelligence Reports & Export Center"
             ],
             index=0
         )
@@ -171,5 +172,46 @@ def render_sidebar(df_raw: pd.DataFrame) -> Tuple[str, pd.DataFrame, Optional[An
                 ]
             except Exception:
                 pass
+
+        # Quick Export Section
+        st.markdown("---")
+        with st.expander("📥 Quick Export Reports", expanded=False):
+            st.caption(f"Export {len(df_filtered):,} active filtered records.")
+            if not df_filtered.empty:
+                # Prepare CSV data
+                export_sub = df_filtered.copy()
+                if "skills" in export_sub.columns:
+                    export_sub["skills"] = export_sub["skills"].apply(lambda s: ", ".join(s) if isinstance(s, list) else str(s))
+                csv_bytes = export_sub.to_csv(index=False).encode("utf-8")
+                st.download_button(
+                    label="📄 Export Filtered CSV",
+                    data=csv_bytes,
+                    file_name="indian_jobs_filtered.csv",
+                    mime="text/csv",
+                    use_container_width=True
+                )
+
+                # Quick text brief
+                top_skill_quick = (
+                    pd.Series([s for sl in df_filtered["skills"] for s in (sl if isinstance(sl, list) else [str(sl)])]).mode()[0]
+                    if not df_filtered.empty else "N/A"
+                )
+                quick_brief = (
+                    f"INDIAN TECH HIRING BRIEFING\n"
+                    f"Generated: {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S UTC')}\n"
+                    f"Filtered Requisitions: {len(df_filtered):,}\n"
+                    f"Mean CTC: INR {df_filtered['salary_lpa'].mean():.2f} LPA\n"
+                    f"Top Skill: {top_skill_quick}\n"
+                    f"Spam Intercept Rate: {(df_filtered['is_spam'].sum() / len(df_filtered) * 100):.1f}%\n"
+                )
+                st.download_button(
+                    label="📝 Export Brief Memo (.txt)",
+                    data=quick_brief,
+                    file_name="indian_tech_hiring_brief.txt",
+                    mime="text/plain",
+                    use_container_width=True
+                )
+            else:
+                st.info("No postings match current filters.")
 
         return selected_page, df_filtered, mongo_db, source_mode

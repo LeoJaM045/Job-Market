@@ -5,6 +5,7 @@ import { OverviewPage } from './components/OverviewPage';
 import { SkillsPage } from './components/SkillsPage';
 import { StreamingPage } from './components/StreamingPage';
 import { SalaryMLPage } from './components/SalaryMLPage';
+import { ReportsPage } from './components/ReportsPage';
 import { SourceCodeModal } from './components/SourceCodeModal';
 import { ArchitectureModal } from './components/ArchitectureModal';
 import {
@@ -129,6 +130,7 @@ export default function App() {
               <OverviewPage
                 postings={filteredPostings}
                 totalRawCount={allPostings.length}
+                onNavigateToReports={() => setCurrentPage('reports')}
               />
             )}
 
@@ -147,6 +149,10 @@ export default function App() {
 
             {currentPage === 'salary-ml' && (
               <SalaryMLPage postings={filteredPostings} />
+            )}
+
+            {currentPage === 'reports' && (
+              <ReportsPage postings={filteredPostings} />
             )}
           </div>
         </main>

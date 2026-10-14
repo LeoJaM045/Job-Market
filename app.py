@@ -29,6 +29,7 @@ from views.overview import render_overview_page
 from views.skills import render_skills_page
 from views.streaming import render_streaming_page
 from views.salary_ml import render_salary_ml_page
+from views.reports import render_reports_page
 
 
 def main() -> None:
@@ -72,6 +73,9 @@ def main() -> None:
 
     elif selected_page == "4. Salary Insights & ML Bracket Prediction":
         render_salary_ml_page(df_filtered)
+
+    elif selected_page == "5. Intelligence Reports & Export Center":
+        render_reports_page(df_filtered)
 
     # 6. Global Footer & Pipeline Metadata
     st.markdown("---")

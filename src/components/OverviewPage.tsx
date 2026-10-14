@@ -6,17 +6,21 @@ import {
   ArrowUpRight,
   Sparkles,
   IndianRupee,
+  FileText,
+  Download,
 } from 'lucide-react';
 import { JobPosting } from '../types';
 
 interface OverviewPageProps {
   postings: JobPosting[];
   totalRawCount: number;
+  onNavigateToReports?: () => void;
 }
 
 export const OverviewPage: React.FC<OverviewPageProps> = ({
   postings,
   totalRawCount,
+  onNavigateToReports,
 }) => {
   const totalAnalyzed = postings.length;
   const avgLpa = useMemo(() => {
@@ -106,9 +110,20 @@ export const OverviewPage: React.FC<OverviewPageProps> = ({
     <div className="space-y-6">
       {/* Architecture Context Banner */}
       <div className="p-4 rounded-lg bg-slate-900 border border-slate-800 text-xs">
-        <div className="flex items-center gap-2 font-medium text-slate-200 mb-1">
-          <Layers className="w-4 h-4 text-emerald-400" />
-          <span>Indian Tech Ecosystem Intelligence: Operational</span>
+        <div className="flex items-center justify-between mb-1">
+          <div className="flex items-center gap-2 font-medium text-slate-200">
+            <Layers className="w-4 h-4 text-emerald-400" />
+            <span>Indian Tech Ecosystem Intelligence: Operational</span>
+          </div>
+          {onNavigateToReports && (
+            <button
+              onClick={onNavigateToReports}
+              className="flex items-center gap-1.5 px-3 py-1 bg-sky-500/10 hover:bg-sky-500/20 text-sky-400 border border-sky-500/30 rounded-md font-medium transition-colors text-xs"
+            >
+              <FileText className="w-3.5 h-3.5" />
+              <span>Export Intelligence Report</span>
+            </button>
+          )}
         </div>
         <p className="text-slate-400 leading-relaxed">
           Aggregating requisitions across <strong className="text-slate-300">Bengaluru, Hyderabad, Pune, Mumbai, Delhi NCR, and Chennai</strong>.

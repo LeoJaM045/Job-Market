@@ -9,6 +9,7 @@ import {
   CheckCircle2,
   RefreshCw,
   Search,
+  FileText,
 } from 'lucide-react';
 import { Role, ExperienceLevel, CompanyType, FilterState } from '../types';
 import { ALL_ROLES, ALL_CITIES, ALL_COMPANY_TYPES, ALL_EXPERIENCE_LEVELS } from '../mockData';
@@ -17,7 +18,8 @@ export type NavPage =
   | 'overview'
   | 'skills'
   | 'streaming'
-  | 'salary-ml';
+  | 'salary-ml'
+  | 'reports';
 
 interface SidebarProps {
   currentPage: NavPage;
@@ -54,6 +56,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
       id: 'salary-ml',
       label: '4. Salary Insights & ML Prediction',
       icon: <TrendingUp className="w-4 h-4" />,
+    },
+    {
+      id: 'reports',
+      label: '5. Intelligence Reports & Export',
+      icon: <FileText className="w-4 h-4" />,
     },
   ];
 
