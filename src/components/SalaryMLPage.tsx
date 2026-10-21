@@ -361,14 +361,8 @@ export const SalaryMLPage: React.FC<SalaryMLPageProps> = ({ postings }) => {
                   ? 'bg-sky-950/30 border-sky-800'
                   : 'bg-slate-900 border-slate-700'
               }`}>
-                <div className="flex items-center justify-between gap-2 mb-1">
-                  <div className="text-[11px] uppercase font-semibold text-slate-400 tracking-wider">
-                    Predicted Indian CTC Tier
-                  </div>
-                  <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[10px] font-semibold bg-slate-900 text-sky-400 border border-slate-700">
-                    <span className="w-1.5 h-1.5 rounded-full bg-sky-400"></span>
-                    Simulated fallback: Local Scikit-Learn Model
-                  </span>
+                <div className="text-[11px] uppercase font-semibold text-slate-400 tracking-wider">
+                  Predicted Indian CTC Tier
                 </div>
                 <div className={`text-2xl font-bold font-mono mt-1 ${
                   prediction.bracket === 'High (> ₹18 LPA)'
@@ -382,15 +376,12 @@ export const SalaryMLPage: React.FC<SalaryMLPageProps> = ({ postings }) => {
                 <div className="text-sm font-semibold text-slate-200 mt-2">
                   Estimated CTC Range: <span className="font-mono text-emerald-400">₹{prediction.estMin} - ₹{prediction.estMax} LPA</span>
                 </div>
-                <div className="text-xs text-slate-400 mt-1 flex items-center justify-between">
-                  <div className="flex items-center gap-1.5">
-                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
-                    <span>Model Confidence:</span>
-                    <span className="font-mono font-bold text-slate-100">
-                      {(prediction.confidence * 100).toFixed(1)}%
-                    </span>
-                  </div>
-                  <span className="text-[11px] text-slate-500 font-mono">Latency: 1.2ms</span>
+                <div className="text-xs text-slate-400 mt-1 flex items-center gap-1.5">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+                  <span>Model Confidence:</span>
+                  <span className="font-mono font-bold text-slate-100">
+                    {(prediction.confidence * 100).toFixed(1)}%
+                  </span>
                 </div>
               </div>
 

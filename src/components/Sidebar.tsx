@@ -10,8 +10,6 @@ import {
   RefreshCw,
   Search,
   FileText,
-  Server,
-  Layers,
 } from 'lucide-react';
 import { Role, ExperienceLevel, CompanyType, FilterState } from '../types';
 import { ALL_ROLES, ALL_CITIES, ALL_COMPANY_TYPES, ALL_EXPERIENCE_LEVELS } from '../mockData';
@@ -21,8 +19,7 @@ export type NavPage =
   | 'skills'
   | 'streaming'
   | 'salary-ml'
-  | 'reports'
-  | 'infrastructure';
+  | 'reports';
 
 interface SidebarProps {
   currentPage: NavPage;
@@ -65,11 +62,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
       label: '5. Reports & Export',
       icon: <FileText className="w-4 h-4" />,
     },
-    {
-      id: 'infrastructure',
-      label: '6. Big Data Infra (HDFS/Spark)',
-      icon: <Server className="w-4 h-4" />,
-    },
   ];
 
   const handleRoleToggle = (role: Role) => {
@@ -102,51 +94,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
   return (
     <aside className="w-72 bg-slate-950 border-r border-slate-800/80 flex flex-col shrink-0 min-h-[calc(100vh-4rem)]">
-      {/* Big Data Pipeline Status Indicator */}
-      <div className="p-3 border-b border-slate-900 bg-slate-900/40">
-        <div className="flex items-center justify-between mb-2">
-          <span className="text-[10px] font-semibold tracking-wider text-slate-400 uppercase">
-            Big Data Cluster Status
-          </span>
-          <button
-            onClick={() => onPageChange('infrastructure')}
-            className="text-[10px] text-sky-400 hover:text-sky-300 font-medium transition-colors"
-          >
-            Manage →
-          </button>
-        </div>
-        <div className="space-y-1.5 text-[11px]">
-          <div className="flex items-center justify-between px-2 py-1 rounded bg-slate-900 border border-slate-800">
-            <span className="text-slate-400">HDFS (9870)</span>
-            <span className="inline-flex items-center gap-1 font-medium text-amber-400">
-              <span className="w-1.5 h-1.5 rounded-full bg-amber-400"></span>
-              Offline (Simulated)
-            </span>
-          </div>
-          <div className="flex items-center justify-between px-2 py-1 rounded bg-slate-900 border border-slate-800">
-            <span className="text-slate-400">Kafka (9092)</span>
-            <span className="inline-flex items-center gap-1 font-medium text-slate-400">
-              <span className="w-1.5 h-1.5 rounded-full bg-slate-500"></span>
-              Idle (Simulated)
-            </span>
-          </div>
-          <div className="flex items-center justify-between px-2 py-1 rounded bg-slate-900 border border-slate-800">
-            <span className="text-slate-400">Spark Batch</span>
-            <span className="inline-flex items-center gap-1 font-medium text-indigo-400">
-              <span className="w-1.5 h-1.5 rounded-full bg-indigo-400"></span>
-              Pandas Fallback
-            </span>
-          </div>
-          <div className="flex items-center justify-between px-2 py-1 rounded bg-slate-900 border border-slate-800">
-            <span className="text-slate-400">Spark MLlib</span>
-            <span className="inline-flex items-center gap-1 font-medium text-sky-400">
-              <span className="w-1.5 h-1.5 rounded-full bg-sky-400"></span>
-              Scikit-Learn Fallback
-            </span>
-          </div>
-        </div>
-      </div>
-
       {/* Streamlit Navigation Section */}
       <div className="p-4 border-b border-slate-900">
         <div className="text-[11px] font-semibold tracking-wider text-slate-400 uppercase mb-2 px-1">

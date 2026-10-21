@@ -6,7 +6,6 @@ import { SkillsPage } from './components/SkillsPage';
 import { StreamingPage } from './components/StreamingPage';
 import { SalaryMLPage } from './components/SalaryMLPage';
 import { ReportsPage } from './components/ReportsPage';
-import { BigDataInfraPage } from './components/BigDataInfraPage';
 import { SourceCodeModal } from './components/SourceCodeModal';
 import { ArchitectureModal } from './components/ArchitectureModal';
 import {
@@ -154,10 +153,6 @@ export default function App() {
 
             {currentPage === 'reports' && (
               <ReportsPage postings={filteredPostings} />
-            )}
-
-            {currentPage === 'infrastructure' && (
-              <BigDataInfraPage />
             )}
           </div>
         </main>
