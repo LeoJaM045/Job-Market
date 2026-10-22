@@ -158,3 +158,69 @@ def render_overview_page(df: pd.DataFrame) -> None:
         )
         fig_bracket.update_layout(**PLOTLY_THEME_LAYOUT)
         st.plotly_chart(fig_bracket, use_container_width=True)
+
+    # Export Report Quick Action Bar
+    st.markdown("---")
+    st.subheader("📥 Export Intelligence Reports & Benchmarks")
+    st.caption("Generate instant executive deliverables for stakeholders, leadership, or downstream pipelines.")
+
+    if not df.empty:
+        from views.reports import generate_markdown_report, generate_printable_html_report
+        import datetime
+
+        e_col1, e_col2, e_col3 = st.columns(3)
+        timestamp_slug = datetime.datetime.now().strftime("%Y%m%d_%H%M")
+        inc_sections = {"kpis": True, "regional": True, "skills": True, "roles": True, "algorithms": True}
+
+        md_report = generate_markdown_report(
+            df=df,
+            report_title="Executive Hiring Intelligence & Indian Market Report",
+            author="Executive Analytics & Data Engineering Team",
+            include_sections=inc_sections,
+            notes="Quarterly benchmark summary generated from active Indian tech hub requisitions."
+        )
+
+        html_report = generate_printable_html_report(
+            df=df,
+            report_title="Executive Hiring Intelligence & Indian Market Report",
+            author="Executive Analytics & Data Engineering Team",
+            include_sections=inc_sections,
+            notes="Quarterly benchmark summary generated from active Indian tech hub requisitions."
+        )
+
+        with e_col1:
+            st.download_button(
+                label="📄 Export Executive Report (.md)",
+                data=md_report,
+                file_name=f"executive_hiring_report_{timestamp_slug}.md",
+                mime="text/markdown",
+                use_container_width=True,
+                help="Download full executive summary in Markdown format"
+            )
+
+        with e_col2:
+            st.download_button(
+                label="🖨️ Export Printable Dossier (.html)",
+                data=html_report,
+                file_name=f"printable_hiring_dossier_{timestamp_slug}.html",
+                mime="text/html",
+                use_container_width=True,
+                help="Standalone HTML report ready to print or save to PDF"
+            )
+
+        with e_col3:
+            export_df = df.copy()
+            if "skills" in export_df.columns:
+                export_df["skills"] = export_df["skills"].apply(lambda s: ", ".join(s) if isinstance(s, list) else str(s))
+            csv_bytes = export_df.to_csv(index=False).encode("utf-8")
+
+            st.download_button(
+                label="📊 Export Filtered Dataset (.csv)",
+                data=csv_bytes,
+                file_name=f"indian_tech_postings_{timestamp_slug}.csv",
+                mime="text/csv",
+                use_container_width=True,
+                help="Download active filtered requisitions as CSV"
+            )
+    else:
+        st.info("No postings currently match the active filters to export.")

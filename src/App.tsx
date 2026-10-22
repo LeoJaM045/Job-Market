@@ -109,6 +109,7 @@ export default function App() {
       <Header
         onOpenSourceModal={() => setIsSourceModalOpen(true)}
         onOpenArchModal={() => setIsArchModalOpen(true)}
+        onNavigateToReports={() => setCurrentPage('reports')}
         totalFiltered={filteredPostings.length}
       />
 

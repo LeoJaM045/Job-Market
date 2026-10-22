@@ -84,7 +84,7 @@ def fetch_job_postings(
             if docs:
                 df = pd.DataFrame(docs)
                 if "posted_date" in df.columns:
-                    df["posted_date"] = pd.to_datetime(df["posted_date"])
+                    df["posted_date"] = pd.to_datetime(df["posted_date"], utc=True).dt.tz_localize(None)
                 df["source_type"] = "MongoDB Live Cluster"
                 return df
         except Exception:

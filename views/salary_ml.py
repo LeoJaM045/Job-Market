@@ -82,6 +82,23 @@ def render_salary_ml_page(df: pd.DataFrame) -> None:
             fig_scatter.update_layout(**PLOTLY_THEME_LAYOUT)
             fig_scatter.update_layout(height=450)
             st.plotly_chart(fig_scatter, use_container_width=True)
+
+            st.markdown("---")
+            sal_summary = df.groupby(["city", "experience_level"]).agg(
+                postings_count=("job_id", "count"),
+                avg_ctc_lpa=("salary_lpa", "mean"),
+                median_ctc_lpa=("salary_lpa", "median"),
+                min_ctc_lpa=("salary_lpa", "min"),
+                max_ctc_lpa=("salary_lpa", "max")
+            ).round(2).reset_index()
+
+            st.download_button(
+                label="📥 Export City & Seniority Compensation Benchmarks (.csv)",
+                data=sal_summary.to_csv(index=False).encode("utf-8"),
+                file_name="indian_compensation_benchmarks.csv",
+                mime="text/csv",
+                use_container_width=True
+            )
         else:
             st.info("No postings available for regression modeling.")
 

@@ -1,15 +1,17 @@
 import React from 'react';
-import { FileCode, Layers, Activity } from 'lucide-react';
+import { FileCode, Layers, Activity, FileText } from 'lucide-react';
 
 interface HeaderProps {
   onOpenSourceModal: () => void;
   onOpenArchModal: () => void;
+  onNavigateToReports?: () => void;
   totalFiltered: number;
 }
 
 export const Header: React.FC<HeaderProps> = ({
   onOpenSourceModal,
   onOpenArchModal,
+  onNavigateToReports,
   totalFiltered,
 }) => {
   return (
@@ -44,6 +46,17 @@ export const Header: React.FC<HeaderProps> = ({
 
       {/* Zone 3: Primary Action Controls */}
       <div className="flex items-center gap-2.5">
+        {onNavigateToReports && (
+          <button
+            onClick={onNavigateToReports}
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-emerald-300 hover:text-white bg-emerald-950/40 hover:bg-emerald-900/60 border border-emerald-700/50 rounded-md transition-colors"
+            title="Open Intelligence Reports & Export Center"
+          >
+            <FileText className="w-3.5 h-3.5 text-emerald-400" />
+            <span>Export Report</span>
+          </button>
+        )}
+
         <button
           onClick={onOpenArchModal}
           className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-slate-300 hover:text-white bg-slate-900 hover:bg-slate-800 border border-slate-800 rounded-md transition-colors"

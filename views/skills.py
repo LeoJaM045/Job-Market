@@ -107,5 +107,29 @@ def render_skills_page(df: pd.DataFrame) -> None:
         fig_heat.update_layout(height=520)
         st.plotly_chart(fig_heat, use_container_width=True)
 
+        # Export Skills Intelligence Data
+        st.markdown("---")
+        st.subheader("📥 Export Skills Intelligence Data")
+        c_exp1, c_exp2 = st.columns(2)
+        with c_exp1:
+            skill_freq_df = df_top_skills.copy()
+            skill_freq_df.columns = ["Skill Name", "Job Postings Count"]
+            st.download_button(
+                label="📥 Export Top Skills Frequency (.csv)",
+                data=skill_freq_df.to_csv(index=False).encode("utf-8"),
+                file_name="indian_tech_skills_frequency.csv",
+                mime="text/csv",
+                use_container_width=True
+            )
+        with c_exp2:
+            co_df = pd.DataFrame(co_matrix, index=matrix_skills, columns=matrix_skills)
+            st.download_button(
+                label="📥 Export Co-occurrence Matrix (.csv)",
+                data=co_df.to_csv().encode("utf-8"),
+                file_name="indian_tech_skills_cooccurrence.csv",
+                mime="text/csv",
+                use_container_width=True
+            )
+
     else:
         st.warning("No skills data available for the selected filters.")
